@@ -16,7 +16,7 @@ class MetaController extends Controller
             $token = env('META_PAGE_TOKEN');
 
             //  ID del formulario (el que probaste en Postman)
-            $formId = '1198054145629534';
+            $formId = env('META_FORM_ID');
 
             // Consumir la API de Meta Graph API
             $response = Http::get("https://graph.facebook.com/v26.0/$formId/leads", [
