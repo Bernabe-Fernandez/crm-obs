@@ -25,6 +25,8 @@ class FacebookLead extends Model
         'vendedor',
         'estatus',
         'fecha_lead',
+        'interest',      
+        'inbox_url',   
     ];
 
     // Relación: un lead pertenece a un formulario

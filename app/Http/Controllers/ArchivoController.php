@@ -1,5 +1,7 @@
 <?php
 
+//controlador de archivos
+
 namespace App\Http\Controllers;
 
 use App\Models\LeadArchivo;
@@ -8,6 +10,8 @@ use Illuminate\Http\Request;
 
 class ArchivoController extends Controller
 {
+
+
     /**
      * Obtener archivos de un lead
      */
@@ -19,6 +23,7 @@ class ArchivoController extends Controller
 
         return response()->json($archivos);
     }
+
 
     /**
      * Subir archivo a un lead
@@ -40,7 +45,7 @@ class ArchivoController extends Controller
         // Crear registro en BD
         $archivo = LeadArchivo::create([
             'lead_id' => $lead_id,
-            'nombre_archivo' => $file->getClientOriginalName(),
+            'nombre_archivo' => $file->getClientOriginalName(), 
             'ruta' => $ruta,
             'tipo' => $file->getClientMimeType(),
             'tamano' => $file->getSize(),
@@ -51,6 +56,7 @@ class ArchivoController extends Controller
             'archivo' => $archivo
         ]);
     }
+
 
     /**
      * Eliminar archivo
@@ -63,6 +69,7 @@ class ArchivoController extends Controller
         if (file_exists(storage_path("app/public/" . $archivo->ruta))) {
             unlink(storage_path("app/public/" . $archivo->ruta));
         }
+
 
         // Eliminar registro en BD
         $archivo->delete();
