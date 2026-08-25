@@ -46,7 +46,7 @@ class CommentController extends Controller
 
 
     /**
-     * Editar comentario (opcional)
+     * Editar comentario (opcional) quitar
      */
     public function update(Request $request, $id)
     {

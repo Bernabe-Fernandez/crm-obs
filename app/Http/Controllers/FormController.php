@@ -29,8 +29,9 @@ class FormController extends Controller
         return response()->json($formulario);
     }
 
+
     /**
-     * Obtener los leads de un formulario
+     * Obtener los leads de un formulario pendiente
      */
     public function leads($id)
     {
@@ -42,7 +43,7 @@ class FormController extends Controller
     }
 
     /**
-     * Actualizar estatus del formulario
+     * Actualizar estatus del formulario pendiente
      */
     public function updateStatus(Request $request, $id)
     {

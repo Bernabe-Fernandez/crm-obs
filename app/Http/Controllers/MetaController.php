@@ -46,8 +46,8 @@ class MetaController extends Controller
 
                 $fields = collect($lead['field_data']);
 
-                // Cam
-                // pos de BD 
+
+                // Campos de BD //
                 $nombre   = $fields->where('name', 'full_name')->first()['values'][0] ?? null;
                 $correo   = $fields->where('name', 'email')->first()['values'][0] ?? null;
                 $telefono = $fields->where('name', 'phone_number')->first()['values'][0] ?? null;

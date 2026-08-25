@@ -59,7 +59,7 @@ class ArchivoController extends Controller
 
 
     /**
-     * Eliminar archivo
+     * Eliminar archivo quitar 
      */
     public function destroy($id)
     {

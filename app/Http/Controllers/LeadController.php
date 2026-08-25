@@ -1,85 +1,122 @@
 <?php
 
-//es nuestro controlador principal
-
-namespace App\Http\Controllers;
 namespace App\Http\Controllers;
 
 use App\Models\FacebookLead;
-use App\Models\LeadComment;
-use App\Models\LeadArchivo;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class LeadController extends Controller
 {
-
-
     /**
-     * Listar todos los leads
+     * Listar todos los leads con relaciones
      */
     public function index()
     {
-        $leads = FacebookLead::with(['form.page'])->orderBy('fecha_lead', 'desc')->get();
+        try {
+            $leads = FacebookLead::with(['form.page'])
+                ->orderBy('fecha_lead', 'desc')
+                ->get();
 
-        return response()->json($leads);
+            return response()->json($leads);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al obtener los leads'
+            ], 500);
+        }
     }
-
 
     /**
      * Mostrar un lead específico
      */
     public function show($id)
     {
-        $lead = FacebookLead::with(['comentarios', 'archivos', 'form.page'])->findOrFail($id);
+        try {
+            $lead = FacebookLead::with(['comentarios', 'archivos', 'form.page'])
+                ->findOrFail($id);
 
-        return response()->json($lead);
+            return response()->json($lead);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Lead no encontrado'
+            ], 404);
+        }
     }
-
 
     /**
      * Actualizar estatus del lead
      */
     public function updateStatus(Request $request, $id)
     {
-        $lead = FacebookLead::findOrFail($id);
-
-        $lead->estatus = $request->estatus;
-        $lead->save();
-
-        return response()->json([
-            'message' => 'Estatus actualizado correctamente',
-            'lead' => $lead
+        // Validación de campo obligatorio
+        $request->validate([
+            'estatus' => 'required|string'
         ]);
-    }
 
+        try {
+            $lead = FacebookLead::findOrFail($id);
+            $lead->estatus = $request->estatus;
+            $lead->save();
+
+            return response()->json([
+                'message' => 'Estatus actualizado correctamente',
+                'lead' => $lead
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Lead no encontrado'
+            ], 404);
+        }
+    }
 
     /**
      * Asignar vendedor al lead
      */
     public function assignSeller(Request $request, $id)
     {
-        $lead = FacebookLead::findOrFail($id);
-
-        $lead->vendedor = $request->vendedor;
-        $lead->save();
-
-        return response()->json([
-            'message' => 'Vendedor asignado correctamente',
-            'lead' => $lead
+        // Validación de campo obligatorio
+        $request->validate([
+            'vendedor' => 'required|string'
         ]);
+
+        try {
+            $lead = FacebookLead::findOrFail($id);
+            $lead->vendedor = $request->vendedor;
+            $lead->save();
+
+            return response()->json([
+                'message' => 'Vendedor asignado correctamente',
+                'lead' => $lead
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Lead no encontrado'
+            ], 404);
+        }
     }
 
-
     /**
-     * Eliminar lead (opcional)
+     * Marcar lead como eliminado (NO borrar)
      */
     public function destroy($id)
     {
-        $lead = FacebookLead::findOrFail($id);
-        $lead->delete();
+        try {
+            $lead = FacebookLead::findOrFail($id);
+            $lead->estatus = 'eliminado';
+            $lead->save();
 
-        return response()->json([
-            'message' => 'Lead eliminado correctamente'
-        ]);
+            return response()->json([
+                'message' => 'Lead marcado como eliminado'
+            ]);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Lead no encontrado'
+            ], 404);
+        }
     }
 }
