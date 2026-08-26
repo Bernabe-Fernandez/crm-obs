@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
 use App\Models\FacebookLead;
 use App\Models\FacebookForm;
 
@@ -11,56 +12,74 @@ class MetaController extends Controller
 {
     public function getLeads()
     {
+        DB::beginTransaction(); // TRANSACCIÓN
+
         try {
-
-
             // Token desde .env
             $token = env('META_PAGE_TOKEN');
-
 
             // ID del formulario REAL de Meta
             $formIdMeta = '1198054145629534';
 
-
             // Buscar el formulario en tu BD por su ID de Meta
-            $form = FacebookForm::where('form_id', $formIdMeta)->first();
+            $form = FacebookForm::firstWhere('form_id', $formIdMeta);
 
             if (!$form) {
+                DB::rollBack();
                 return response()->json([
                     'error' => 'El formulario no existe en vt_facebook_forms',
                     'details' => $formIdMeta
                 ], 400);
             }
 
-
             // Llamada correcta a Meta Graph API
             $response = Http::get("https://graph.facebook.com/v26.0/$formIdMeta/leads", [
                 'access_token' => $token
             ]);
 
+            // Validar si Meta devolvió error
+            if ($response->failed()) {
+                DB::rollBack();
+                return response()->json([
+                    'error' => 'Meta Graph API devolvió un error',
+                    'details' => $response->json()
+                ], 500);
+            }
 
-            // Convertir JSON
-            $data = $response->json()['data'];
+            // Validar estructura
+            $json = $response->json();
+
+            if (!isset($json['data'])) {
+                DB::rollBack();
+                return response()->json([
+                    'error' => 'Meta no devolvió leads',
+                    'details' => $json
+                ], 500);
+            }
+
+            $data = $json['data'];
 
             foreach ($data as $lead) {
 
+                // Validar estructura del lead
+                if (!isset($lead['field_data'])) {
+                    continue; // Evita errores si Meta manda un lead incompleto
+                }
+
                 $fields = collect($lead['field_data']);
 
-
-                // Campos de BD //
-                $nombre   = $fields->where('name', 'full_name')->first()['values'][0] ?? null;
-                $correo   = $fields->where('name', 'email')->first()['values'][0] ?? null;
-                $telefono = $fields->where('name', 'phone_number')->first()['values'][0] ?? null;
-                $ciudad   = $fields->where('name', 'city')->first()['values'][0] ?? null;
-                $interest = $fields->where('name', '¿en_qué_estás_interesado?')->first()['values'][0] ?? null;
-                $inboxUrl = $fields->where('name', 'inbox_url')->first()['values'][0] ?? null;
-
+                // Extraer campos de Meta de forma segura
+                $nombre   = optional($fields->firstWhere('name', 'full_name'))['values'][0] ?? null;
+                $correo   = optional($fields->firstWhere('name', 'email'))['values'][0] ?? null;
+                $telefono = optional($fields->firstWhere('name', 'phone_number'))['values'][0] ?? null;
+                $ciudad   = optional($fields->firstWhere('name', 'city'))['values'][0] ?? null;
+                $interest = optional($fields->firstWhere('name', '¿en_qué_estás_interesado?'))['values'][0] ?? null;
+                $inboxUrl = optional($fields->firstWhere('name', 'inbox_url'))['values'][0] ?? null;
 
                 // Evitar duplicados
-                $exists = FacebookLead::where('facebook_lead_id', $lead['id'])->first();
+                $exists = FacebookLead::firstWhere('facebook_lead_id', $lead['id']);
 
                 if (!$exists) {
-
                     FacebookLead::create([
                         'form_id'            => $form->id, // ID interno correcto
                         'facebook_lead_id'   => $lead['id'],
@@ -77,14 +96,16 @@ class MetaController extends Controller
                 }
             }
 
-            
+            DB::commit(); // TODO OK
+
             return response()->json([
                 'message' => 'Leads guardados correctamente',
                 'count'   => count($data)
-            ]);
-
+            ], 200);
 
         } catch (\Exception $e) {
+
+            DB::rollBack(); // REVERSA TODO
 
             return response()->json([
                 'error' => 'Error al obtener los leads',
@@ -93,4 +114,5 @@ class MetaController extends Controller
         }
     }
 }
+
 

@@ -1,11 +1,11 @@
 <?php
 
 namespace App\Http\Controllers;
-namespace App\Http\Controllers;
 
 use App\Models\FacebookForm;
 use App\Models\FacebookLead;
 use Illuminate\Http\Request;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class FormController extends Controller
 {
@@ -14,9 +14,18 @@ class FormController extends Controller
      */
     public function index()
     {
-        $formularios = FacebookForm::with('page')->orderBy('id', 'desc')->get();
+        try {
+            $formularios = FacebookForm::with('page')
+                ->orderBy('id', 'desc')
+                ->get();
 
-        return response()->json($formularios);
+            return response()->json($formularios, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al obtener los formularios'
+            ], 500);
+        }
     }
 
     /**
@@ -24,22 +33,41 @@ class FormController extends Controller
      */
     public function show($id)
     {
-        $formulario = FacebookForm::with(['page', 'leads'])->findOrFail($id);
+        try {
+            $formulario = FacebookForm::with(['page', 'leads'])
+                ->findOrFail($id);
 
-        return response()->json($formulario);
+            return response()->json($formulario, 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Formulario no encontrado'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al obtener el formulario'
+            ], 500);
+        }
     }
-
 
     /**
      * Obtener los leads de un formulario pendiente
      */
     public function leads($id)
     {
-        $leads = FacebookLead::where('form_id', $id)
-            ->orderBy('fecha_lead', 'desc')
-            ->get();
+        try {
+            $leads = FacebookLead::where('form_id', $id)
+                ->orderBy('fecha_lead', 'desc')
+                ->get();
 
-        return response()->json($leads);
+            return response()->json($leads, 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al obtener los leads del formulario'
+            ], 500);
+        }
     }
 
     /**
@@ -47,14 +75,32 @@ class FormController extends Controller
      */
     public function updateStatus(Request $request, $id)
     {
-        $formulario = FacebookForm::findOrFail($id);
-
-        $formulario->estatus = $request->estatus;
-        $formulario->save();
-
-        return response()->json([
-            'message' => 'Estatus del formulario actualizado correctamente',
-            'formulario' => $formulario
+        // Validación
+        $request->validate([
+            'estatus' => 'required|string|max:50'
         ]);
+
+        try {
+            $formulario = FacebookForm::findOrFail($id);
+
+            $formulario->estatus = $request->estatus;
+            $formulario->save();
+
+            return response()->json([
+                'message' => 'Estatus del formulario actualizado correctamente',
+                'formulario' => $formulario
+            ], 200);
+
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'Formulario no encontrado'
+            ], 404);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Error al actualizar el estatus del formulario'
+            ], 500);
+        }
     }
 }
+

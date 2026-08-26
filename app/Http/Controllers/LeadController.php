@@ -99,24 +99,4 @@ class LeadController extends Controller
         }
     }
 
-    /**
-     * Marcar lead como eliminado (NO borrar)
-     */
-    public function destroy($id)
-    {
-        try {
-            $lead = FacebookLead::findOrFail($id);
-            $lead->estatus = 'eliminado';
-            $lead->save();
-
-            return response()->json([
-                'message' => 'Lead marcado como eliminado'
-            ]);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Lead no encontrado'
-            ], 404);
-        }
-    }
 }
