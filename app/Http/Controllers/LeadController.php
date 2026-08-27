@@ -27,29 +27,13 @@ class LeadController extends Controller
         }
     }
 
-    /**
-     * Mostrar un lead específico
-     */
-    public function show($id)
-    {
-        try {
-            $lead = FacebookLead::with(['comentarios', 'archivos', 'form.page'])
-                ->findOrFail($id);
-
-            return response()->json($lead);
-
-        } catch (ModelNotFoundException $e) {
-            return response()->json([
-                'error' => 'Lead no encontrado'
-            ], 404);
-        }
-    }
 
     /**
      * Actualizar estatus del lead
      */
     public function updateStatus(Request $request, $id)
     {
+        
         // Validación de campo obligatorio
         $request->validate([
             'estatus' => 'required|string'
@@ -71,6 +55,8 @@ class LeadController extends Controller
             ], 404);
         }
     }
+
+
 
     /**
      * Asignar vendedor al lead

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('vt_facebook_leads', function (Blueprint $table) {
             // Agregar los nuevos campos
             $table->string('interest')->nullable()->after('ciudad');
-            $table->string('inbox_url')->nullable()->after('interest');
+          
         });
     }
 
@@ -25,7 +25,7 @@ return new class extends Migration
     {
         Schema::table('vt_facebook_leads', function (Blueprint $table) {
             // Eliminar los campos si se revierte la migración
-            $table->dropColumn(['interest', 'inbox_url']);
+            $table->dropColumn(['interest']);
         });
     }
 };

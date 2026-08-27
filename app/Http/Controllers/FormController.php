@@ -70,11 +70,14 @@ class FormController extends Controller
         }
     }
 
+
+
     /**
      * Actualizar estatus del formulario pendiente
      */
     public function updateStatus(Request $request, $id)
     {
+        
         // Validación
         $request->validate([
             'estatus' => 'required|string|max:50'

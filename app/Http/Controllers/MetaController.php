@@ -15,14 +15,21 @@ class MetaController extends Controller
         DB::beginTransaction(); // TRANSACCIÓN
 
         try {
+
+
             // Token desde .env
             $token = env('META_PAGE_TOKEN');
 
+
+            
             // ID del formulario REAL de Meta
             $formIdMeta = '1198054145629534';
 
+
+
             // Buscar el formulario en tu BD por su ID de Meta
             $form = FacebookForm::firstWhere('form_id', $formIdMeta);
+
 
             if (!$form) {
                 DB::rollBack();
@@ -32,19 +39,23 @@ class MetaController extends Controller
                 ], 400);
             }
 
-            // Llamada correcta a Meta Graph API
+
+            // Llamada a Meta Graph API
             $response = Http::get("https://graph.facebook.com/v26.0/$formIdMeta/leads", [
                 'access_token' => $token
             ]);
 
+
+
             // Validar si Meta devolvió error
             if ($response->failed()) {
-                DB::rollBack();
+                DB::rollBack();    //Deshaz absolutamente todos los cambios que se hicieron en la base de dato
                 return response()->json([
                     'error' => 'Meta Graph API devolvió un error',
                     'details' => $response->json()
                 ], 500);
             }
+
 
             // Validar estructura
             $json = $response->json();
@@ -57,18 +68,26 @@ class MetaController extends Controller
                 ], 500);
             }
 
+
             $data = $json['data'];
 
             foreach ($data as $lead) {
 
-                // Validar estructura del lead
+
+                // Validar estructura del lead (se esta incmpleto un led saltalo )
                 if (!isset($lead['field_data'])) {
-                    continue; // Evita errores si Meta manda un lead incompleto
+                    continue;  // Evita errores si Meta manda un lead incompleto
                 }
 
-                $fields = collect($lead['field_data']);
+                
 
-                // Extraer campos de Meta de forma segura
+                // convertir campos de meta en una coleccion y poder filtrarlos con firstWhere.
+                $fields = collect($lead['field_data']); 
+
+
+
+                // optional() para evitar errores cuando Meta no envía un campo, firstWhere para ejecutar la consulta de un solo registro.
+
                 $nombre   = optional($fields->firstWhere('name', 'full_name'))['values'][0] ?? null;
                 $correo   = optional($fields->firstWhere('name', 'email'))['values'][0] ?? null;
                 $telefono = optional($fields->firstWhere('name', 'phone_number'))['values'][0] ?? null;
@@ -76,12 +95,18 @@ class MetaController extends Controller
                 $interest = optional($fields->firstWhere('name', '¿en_qué_estás_interesado?'))['values'][0] ?? null;
                 $inboxUrl = optional($fields->firstWhere('name', 'inbox_url'))['values'][0] ?? null;
 
+
+                
                 // Evitar duplicados
                 $exists = FacebookLead::firstWhere('facebook_lead_id', $lead['id']);
 
+
+
+                //Guardar en la BD
+                
                 if (!$exists) {
                     FacebookLead::create([
-                        'form_id'            => $form->id, // ID interno correcto
+                        'form_id'            => $form->id, // ID interno 
                         'facebook_lead_id'   => $lead['id'],
                         'nombre'             => $nombre,
                         'correo'             => $correo,
@@ -96,16 +121,20 @@ class MetaController extends Controller
                 }
             }
 
-            DB::commit(); // TODO OK
+
+            DB::commit(); // GUARDAR LOS CAMBIOS SI TODO SALE BIEN
 
             return response()->json([
                 'message' => 'Leads guardados correctamente',
                 'count'   => count($data)
             ], 200);
 
+
+
         } catch (\Exception $e) {
 
-            DB::rollBack(); // REVERSA TODO
+
+            DB::rollBack(); // SI ALGO SALE MAL DESHAZ TODO 
 
             return response()->json([
                 'error' => 'Error al obtener los leads',
