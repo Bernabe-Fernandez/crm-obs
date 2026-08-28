@@ -15,6 +15,7 @@ class FacebookLead extends Model
 
     // Campos que se pueden llenar masivamente
     protected $fillable = [
+        'form_id',
         'facebook_lead_id',
         'nombre',
         'correo',

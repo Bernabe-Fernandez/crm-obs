@@ -16,9 +16,9 @@ use Illuminate\Support\Facades\Schema;
     {
         Schema::create('vt_facebook_leads', function (Blueprint $table) {
 
-            $table->id();                                      // ID interno del lead
-            $table->unsignedBigInteger('form_id');             // Relación con vt_facebook_forms
-            $table->string('facebook_lead_id')->nullable();    // ID del lead en Meta
+            $table->id();      
+            $table->string('facebook_lead_id')->nullable()->unique(); // ID del lead en Meta                                    
+            $table->unsignedBigInteger('form_id')->nullable();   // ID del lead en Meta
             $table->string('nombre')->nullable();              // Nombre del prospecto
             $table->string('correo')->nullable();              // Correo del prospecto
             $table->string('telefono')->nullable();            // Teléfono del prospecto

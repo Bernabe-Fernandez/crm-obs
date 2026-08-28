@@ -1,7 +1,5 @@
 <?php
 
-// Este modelo representara la tabla vt_facebook_page
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -9,8 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class FacebookPage extends Model
 {
-
-    use HasFactory; 
+    use HasFactory;
 
     // Nombre exacto de la tabla
     protected $table = 'vt_facebook_page';
@@ -22,12 +19,14 @@ class FacebookPage extends Model
         'token',
     ];
 
+    // Campos que se deben ocultar en las respuestas JSON
+    protected $hidden = [
+        'token',
+    ];
 
     // Relación: una página tiene muchos formularios
-
     public function forms()
     {
         return $this->hasMany(FacebookForm::class, 'page_id');
     }
-
 }

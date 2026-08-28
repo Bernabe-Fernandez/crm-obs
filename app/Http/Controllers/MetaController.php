@@ -106,7 +106,7 @@ class MetaController extends Controller
                 
                 if (!$exists) {
                     FacebookLead::create([
-                        'form_id'            => $form->id, // ID interno 
+                        'form_id'            => 1, 
                         'facebook_lead_id'   => $lead['id'],
                         'nombre'             => $nombre,
                         'correo'             => $correo,
